@@ -1,10 +1,12 @@
 package Models;
 
+import Logic.ConnectingLogic;
 import Logic.GameLogic;
 import Logic.LoginLogic;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 
 public class PlayerModel extends Thread
 {
@@ -16,6 +18,7 @@ public class PlayerModel extends Thread
     private DataOutputStream _outClient;
     private boolean _isReady;
     private Socket _clientSocket;
+    private List<PlayerModel> _playerList;
 
     public PlayerModel(int id, Socket clientSocket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException
     {
@@ -32,17 +35,7 @@ public class PlayerModel extends Thread
         try
         {
             set_login(loginLogic.Login(get_inClient(), get_outClient()));
-        }
-        catch(Exception io)
-        {
-            io.printStackTrace();
-        }
-        set_isReady(true);
-
-        GameLogic gameLogic = new GameLogic();
-        try
-        {
-            gameLogic.Start(get_inClient(), get_outClient(), get_id());
+            set_isReady(true);
         }
         catch(Exception io)
         {
@@ -112,5 +105,13 @@ public class PlayerModel extends Thread
 
     public void set_clientSocket(Socket _clientSocket) {
         this._clientSocket = _clientSocket;
+    }
+
+    public List<PlayerModel> get_playerList() {
+        return _playerList;
+    }
+
+    public void set_playerList(List<PlayerModel> _playerList) {
+        this._playerList = _playerList;
     }
 }

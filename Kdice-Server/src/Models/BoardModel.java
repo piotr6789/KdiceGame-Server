@@ -1,13 +1,17 @@
 package Models;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 
 public class BoardModel
 {
     private FieldModel[][] _boardModel = new FieldModel[5][5];
+    private List<PlayerModel> playerList;
 
-    public BoardModel()
+    public BoardModel(List<PlayerModel> playerList)
     {
+        this.playerList = playerList;
         createBoard();
         setUpPlayers();
         generateRandomCubes();
@@ -54,19 +58,20 @@ public class BoardModel
     private void createBoard()
     {
         for (int i = 0; i < 5; i++) {
-            for (int j = 0; i < 5; j++) {
+            for (int j = 0; j < 5; j++) {
                 _boardModel[i][j] = new FieldModel();
             }
         }
     }
 
-    public void printBoard()
-    {
-        for (int i = 0; i < 5 ; i++) {
-            for (int j = 0 ; j < 5 ; j++) {
-                System.out.println("Owner: " + _boardModel[i][j].getOwnerId() + " CUBES: " + _boardModel[i][j].getCubesCount());
+    public void printBoard() throws IOException {
+
+        for (PlayerModel player : playerList) {
+            for (int i = 0; i < 5 ; i++) {
+                for (int j = 0 ; j < 5 ; j++) {
+                    player.get_outClient().writeUTF("PLANSZA " + i + " " + j + " " + _boardModel[i][j].getOwnerId() + " " + _boardModel[i][j].getCubesCount());
+                }
             }
-            System.out.println();
         }
     }
 
