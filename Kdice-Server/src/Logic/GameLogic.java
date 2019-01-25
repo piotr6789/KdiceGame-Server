@@ -12,7 +12,7 @@ public class GameLogic
     static void Start(List<PlayerModel> playerList) throws IOException {
         for (PlayerModel player : playerList) {
             player.get_outClient().writeUTF("START " + player.get_id() + " 1");
-            player.set_isReady(false);
+            player.set_isReady(true);
         }
     }
 
@@ -21,4 +21,6 @@ public class GameLogic
             player.get_outClient().flush();
         }
     }
+
+
 }

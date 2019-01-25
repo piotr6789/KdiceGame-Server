@@ -15,53 +15,81 @@ public class ConnectingLogic
 {
     public static List<PlayerModel> playerList = new ArrayList<>();
     public static int counter = 0;
+    public static BoardModel board;
+    public static int roundCounter = 0;
+    public static String answerClient = "";
 
-    public static void startConnect(ServerSocket serverSocket) throws IOException
-    {
+    public static void startConnect(ServerSocket serverSocket) throws IOException, InterruptedException {
         int id = 1;
 
-        while(counter < 1) {
-            counter++;
-            if (playerList.size() < 5) {
-                while (playerList.size() < 5) {
-                    Socket clientSocket = null;
-                    clientSocket = serverSocket.accept();
+            while (counter < 1) {
+                counter++;
+                if (playerList.size() < 5) {
+                    while (playerList.size() < 5) {
+                        Socket clientSocket = null;
+                        clientSocket = serverSocket.accept();
 
-                    //Obtaining input and out streams
-                    DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
-                    DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
+                        //Obtaining input and out streams
+                        DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+                        DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
 
-                    //Create a new thread object
-                    PlayerModel newPlayer = new PlayerModel(id, clientSocket, inputStream, outputStream);
-                    playerList.add(newPlayer);
+                        //Create a new thread object
+                        PlayerModel newPlayer = new PlayerModel(id, clientSocket, inputStream, outputStream);
+                        playerList.add(newPlayer);
 
-                    //Invoking the start() method
-                    newPlayer.start();
-                    id++;
+                        //Invoking the start() method
+                        newPlayer.start();
+                        id++;
+                    }
+                }
+
+                if (playerList.size() == 5) {
+                    try {
+                        GameLogic.Start(playerList);
+                        Thread.sleep(1000);
+                    } catch (Exception io) {
+                        io.printStackTrace();
+                    }
+                }
+
+                board = new BoardModel(playerList);
+                board.createBoard();
+                board.setUpPlayersAndCubes();
+
+                while (roundCounter < 10) {
+                    board.printBoard();
+                    GameLogic.cleanBuffor(playerList);
+                    for (PlayerModel player : playerList) {
+                        player.get_outClient().writeUTF("TWOJ RUCH");
+                        board.printBoard();
+                        answerClient = player.get_inClient().readUTF();
+                        while (answerClient.substring(0, 4).equals("ATAK")) {
+                            player.get_outClient().writeUTF("OK");
+                            for (PlayerModel players : playerList) {
+                                if (players.get_id() != player.get_id()) {
+                                    players.get_outClient().writeUTF(answerClient);
+                                }
+                            }
+                            board.updateBoardAfterAttack(answerClient, player.get_id());
+                            board.printBoard();
+                            GameLogic.cleanBuffor(playerList);
+                            answerClient = player.get_inClient().readUTF();
+                        }
+                        if (answerClient.equals("PASS")) {
+                            player.get_outClient().writeUTF("PASS");
+                            continue;
+                        }
+                    }
+
+
+                    for (PlayerModel player : playerList) {
+                        player.get_outClient().writeUTF("KONIEC RUNDY");
+                    }
+
+                    board.addCubesAfterRound();
+                    Thread.sleep(1000);
+                    roundCounter++;
                 }
             }
-
-            GameLogic gameLogic = new GameLogic();
-            if(playerList.size() == 5 && playerList.stream().allMatch(PlayerModel::is_isReady)){
-                try
-                {
-                    GameLogic.Start(playerList);
-                    Thread.sleep(2000);
-                }
-                catch(Exception io)
-                {
-                    io.printStackTrace();
-                }
-            }
-
-
-            BoardModel board = new BoardModel(playerList);
-            board.printBoard();
-            GameLogic.cleanBuffor(playerList);
-
-            playerList.get(0).get_outClient().writeUTF("TWOJ RUCH");
-            playerList.get(0).set_isReady(true);
-            System.out.println(playerList.get(0).get_inClient().readUTF());
-        }
     }
 }

@@ -19,6 +19,7 @@ public class PlayerModel extends Thread
     private boolean _isReady;
     private Socket _clientSocket;
     private List<PlayerModel> _playerList;
+    private boolean _isEliminated;
 
     public PlayerModel(int id, Socket clientSocket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException
     {
@@ -27,6 +28,7 @@ public class PlayerModel extends Thread
         _inClient = inputStream;
         _outClient = outputStream;
         _isReady = false;
+        _isEliminated = false;
     }
 
     @Override
@@ -113,5 +115,13 @@ public class PlayerModel extends Thread
 
     public void set_playerList(List<PlayerModel> _playerList) {
         this._playerList = _playerList;
+    }
+
+    public boolean is_isEliminated() {
+        return _isEliminated;
+    }
+
+    public void set_isEliminated(boolean _isEliminated) {
+        this._isEliminated = _isEliminated;
     }
 }
