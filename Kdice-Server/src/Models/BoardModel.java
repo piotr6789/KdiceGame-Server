@@ -1,6 +1,7 @@
 package Models;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -8,6 +9,13 @@ public class BoardModel
 {
     private static FieldModel[][] _boardModel = new FieldModel[5][5];
     private static List<PlayerModel> playerList;
+    private static List<Integer> attackerCubesValues = new ArrayList<>();
+    private static List<Integer> defenderCubesValues = new ArrayList<>();
+    private static int attackerID;
+    private static int defenderID;
+    private static int winner = 0;
+    private static int summaryAttacker = 0;
+    private static int summaryDefender = 0;
 
     public BoardModel(List<PlayerModel> playerList)
     {
@@ -76,19 +84,30 @@ public class BoardModel
     }
 
     public static void updateBoardAfterAttack(String command, int ID){
+        attackerCubesValues.clear();
+        defenderCubesValues.clear();
+
+        setAttackerID(0);
+        setDefenderID(0);
+
         String replaceString = command.replaceAll("\\s","");
         String finalString = replaceString.replaceAll("[^0-9.]", "");
         int totalValueAttacker = 0;
         int totalValueDeffender = 0;
 
+        setAttackerID(_boardModel[Character.getNumericValue(finalString.charAt(0))][Character.getNumericValue(finalString.charAt(1))].getOwnerId());
+        setDefenderID(_boardModel[Character.getNumericValue(finalString.charAt(2))][Character.getNumericValue(finalString.charAt(3))].getOwnerId());
+
         for(int i = 0; i < _boardModel[Character.getNumericValue(finalString.charAt(0))][Character.getNumericValue(finalString.charAt(1))].getCubesCount(); i++){
-            int random = new Random().nextInt(6);
+            int random = new Random().nextInt(6) + 1;
             totalValueAttacker = totalValueAttacker + random;
+            attackerCubesValues.add(random);
         }
 
         for(int i = 0; i < _boardModel[Character.getNumericValue(finalString.charAt(2))][Character.getNumericValue(finalString.charAt(3))].getCubesCount(); i++){
-            int random = new Random().nextInt(6);
+            int random = new Random().nextInt(6) + 1;
             totalValueDeffender = totalValueDeffender + random;
+            defenderCubesValues.add(random);
         }
 
 
@@ -102,6 +121,27 @@ public class BoardModel
         }
         if(totalValueAttacker < totalValueDeffender){
             _boardModel[Character.getNumericValue(finalString.charAt(0))][Character.getNumericValue(finalString.charAt(1))].setCubesCount(1);
+        }
+
+
+
+        setSummaryAttacker(0);
+        setSummaryDefender(0);
+
+        for(Integer values : attackerCubesValues){
+            setSummaryAttacker(getSummaryAttacker() + values);
+        }
+
+        for(Integer values : defenderCubesValues){
+            setSummaryDefender(getSummaryDefender() + values);
+        }
+
+        if(summaryAttacker > summaryDefender){
+            setWinner(_boardModel[Character.getNumericValue(finalString.charAt(0))][Character.getNumericValue(finalString.charAt(1))].getOwnerId());
+        }
+
+        if(summaryDefender > summaryAttacker){
+            setWinner(_boardModel[Character.getNumericValue(finalString.charAt(2))][Character.getNumericValue(finalString.charAt(3))].getOwnerId());
         }
     }
 
@@ -197,6 +237,68 @@ public class BoardModel
                 }
             }
         }
+    }
+
+    public static String attackResult(){
+        String result = "WYNIK ";
+
+        return result + getAttackerID() + " " + getAttackerCubesValues().size() + " " + getSummaryAttacker() + " " + getDefenderID() + " " + getDefenderCubesValues().size() + " " + getSummaryDefender() + " " + getWinner();
+    }
+
+    public static List<Integer> getAttackerCubesValues() {
+        return attackerCubesValues;
+    }
+
+    public static void setAttackerCubesValues(List<Integer> attackerCubesValues) {
+        BoardModel.attackerCubesValues = attackerCubesValues;
+    }
+
+    public static List<Integer> getDefenderCubesValues() {
+        return defenderCubesValues;
+    }
+
+    public static void setDefenderCubesValues(List<Integer> defenderCubesValues) {
+        BoardModel.defenderCubesValues = defenderCubesValues;
+    }
+
+    public static int getAttackerID() {
+        return attackerID;
+    }
+
+    public static void setAttackerID(int attackerID) {
+        BoardModel.attackerID = attackerID;
+    }
+
+    public static int getDefenderID() {
+        return defenderID;
+    }
+
+    public static void setDefenderID(int defenderID) {
+        BoardModel.defenderID = defenderID;
+    }
+
+    public static int getWinner() {
+        return winner;
+    }
+
+    public static void setWinner(int winner) {
+        BoardModel.winner = winner;
+    }
+
+    public static int getSummaryAttacker() {
+        return summaryAttacker;
+    }
+
+    public static void setSummaryAttacker(int summaryAttacker) {
+        BoardModel.summaryAttacker = summaryAttacker;
+    }
+
+    public static int getSummaryDefender() {
+        return summaryDefender;
+    }
+
+    public static void setSummaryDefender(int summaryDefender) {
+        BoardModel.summaryDefender = summaryDefender;
     }
 
     public FieldModel[][] getBoardModel() {

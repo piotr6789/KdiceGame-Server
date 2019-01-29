@@ -9,8 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ConnectingLogic
 {
@@ -20,6 +19,7 @@ public class ConnectingLogic
     public static int roundCounter = 0;
     public static int gameCounter = 0;
     public static String answerClient = "";
+    public static int randomStarter;
 
     public static void startConnect(ServerSocket serverSocket) throws IOException, InterruptedException {
         int id = 1;
@@ -54,7 +54,8 @@ public class ConnectingLogic
                         io.printStackTrace();
                     }
                 }
-
+                List<PlayerModel> randomList = new ArrayList<>();
+                randomList = playerList;
 
                 while (gameCounter < 10) {
                     gameCounter++;
@@ -64,11 +65,12 @@ public class ConnectingLogic
                     board.createBoard();
                     board.setUpPlayersAndCubes();
 
+                    Collections.shuffle(randomList);
 
                     Thread.sleep(2000);
                     while (roundCounter < 100) {
 
-                        for (PlayerModel player : playerList) {
+                        for (PlayerModel player : randomList) {
                             player.get_outClient().writeUTF("START GRY");
                         }
                         board.printBoard();
@@ -89,6 +91,9 @@ public class ConnectingLogic
                                 board.updateBoardAfterAttack(answerClient, player.get_id());
                                 board.printBoard();
                                 GameLogic.cleanBuffor(playerList);
+                                for(PlayerModel playerModel : playerList){
+                                    playerModel.get_outClient().writeUTF(board.attackResult());
+                                }
                                 answerClient = player.get_inClient().readUTF();
                             }
                             if (answerClient.equals("PASS")) {
