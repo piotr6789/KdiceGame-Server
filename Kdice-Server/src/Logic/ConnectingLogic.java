@@ -59,7 +59,6 @@ public class ConnectingLogic
 
                 while (gameCounter < 10) {
                     gameCounter++;
-
                     roundCounter = 0;
                     board = new BoardModel(playerList);
                     board.createBoard();

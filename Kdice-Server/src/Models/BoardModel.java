@@ -1,6 +1,7 @@
 package Models;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -16,6 +17,7 @@ public class BoardModel
     private static int winner = 0;
     private static int summaryAttacker = 0;
     private static int summaryDefender = 0;
+
 
     public BoardModel(List<PlayerModel> playerList)
     {
@@ -89,6 +91,7 @@ public class BoardModel
 
         setAttackerID(0);
         setDefenderID(0);
+
 
         String replaceString = command.replaceAll("\\s","");
         String finalString = replaceString.replaceAll("[^0-9.]", "");
@@ -240,9 +243,16 @@ public class BoardModel
     }
 
     public static String attackResult(){
-        String result = "WYNIK ";
+        String result = "WYNIK " + getAttackerID() + " " + getAttackerCubesValues().size() + " ";
+        for(Integer valuesAttacker : attackerCubesValues){
+            result = result + valuesAttacker + " ";
+        }
+        result = result + getDefenderID() + " " + getDefenderCubesValues().size() + " ";
 
-        return result + getAttackerID() + " " + getAttackerCubesValues().size() + " " + getSummaryAttacker() + " " + getDefenderID() + " " + getDefenderCubesValues().size() + " " + getSummaryDefender() + " " + getWinner();
+        for(Integer valuesDefender : defenderCubesValues){
+            result = result + valuesDefender + " ";
+        }
+        return result + getWinner();
     }
 
     public static List<Integer> getAttackerCubesValues() {
@@ -300,6 +310,7 @@ public class BoardModel
     public static void setSummaryDefender(int summaryDefender) {
         BoardModel.summaryDefender = summaryDefender;
     }
+
 
     public FieldModel[][] getBoardModel() {
         return _boardModel;
