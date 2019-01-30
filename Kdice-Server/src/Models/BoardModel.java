@@ -1,7 +1,6 @@
 package Models;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,12 +16,136 @@ public class BoardModel
     private static int winner = 0;
     private static int summaryAttacker = 0;
     private static int summaryDefender = 0;
+    private static int checker = 0;
+    private static int roundCounter = 0;
+
+
 
 
     public BoardModel(List<PlayerModel> playerList)
     {
         this.playerList = playerList;
 
+    }
+
+    public static void clearPoints(List<PlayerModel> playerList){
+        for(PlayerModel player : playerList){
+            player.setRoundPoints(0);
+        }for(PlayerModel player : playerList){
+            player.setRoundPlace(0);
+        }
+    }
+
+    public static void printFinalResult(List<PlayerModel> playerList) throws IOException {
+        String wynik = "WYNIK ";
+        for(PlayerModel player : playerList){
+            wynik = wynik + player.get_login() + " " + player.get_finalResult() + " ";
+        }
+        for(PlayerModel playerModel : playerList){
+            playerModel.get_outClient().writeUTF(wynik);
+        }
+    }
+
+    public static void addFinalPoints(List<PlayerModel> playerList){
+        for(PlayerModel playerModel : playerList){
+            playerModel.set_finalResult(playerModel.get_finalResult() + playerModel.getRoundPoints());
+        }
+    }
+
+    public static void printRoundResults(List<PlayerModel> playerList, int round) throws IOException {
+        roundCounter = 0;
+        for(PlayerModel player : playerList){
+            if(player.getRoundPlace() == 0){
+                player.setRoundPoints(2);
+                player.setRoundPlace(2);
+                player.setRoundCounter(round);
+            }
+            roundCounter = player.getRoundCounter();
+            player.get_outClient().writeUTF("TURA " + roundCounter + " " + player.getRoundPlace());
+        }
+    }
+
+    public static void roundResults(PlayerModel playerModel, List<PlayerModel> playerList, int round){
+        checker = 0;
+        if(playerModel.getRoundPoints() == 0 && playerModel.is_isEliminated()){
+            playerModel.setRoundCounter(round);
+            for(PlayerModel player : playerList){
+                if(player.get_id() != playerModel.get_id()){
+                    if(player.getRoundPoints() != 0){
+                        checker++;
+                    }
+                }
+            }
+            if(checker == 0){
+                playerModel.setRoundPoints(5);
+            }
+            if(checker == 1){
+                playerModel.setRoundPoints(4);
+            }
+            if(checker == 2){
+                playerModel.setRoundPoints(3);
+            }
+            if(checker == 3){
+                playerModel.setRoundPoints(2);
+            }
+            if(checker == 4){
+                playerModel.setRoundPoints(1);
+            }
+        }
+    }
+
+    public static void roundPlaces(List<PlayerModel> playerList){
+        for(PlayerModel player : playerList){
+            if(player.getRoundPoints() == 1){
+                player.setRoundPlace(1);
+            }
+            if(player.getRoundPoints() == 2){
+                player.setRoundPlace(2);
+            }
+            if(player.getRoundPoints() == 3){
+                player.setRoundPlace(3);
+            }
+            if(player.getRoundPoints() == 4){
+                player.setRoundPlace(4);
+            }
+            if(player.getRoundPoints() == 5){
+                player.setRoundPlace(5);
+            }
+        }
+    }
+
+    public static boolean checkPlayers(int round){
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                if(_boardModel[1][1].getOwnerId() != _boardModel[i][j].getOwnerId()){
+                    return true;
+                }
+            }
+        }
+        for(PlayerModel players : playerList){
+            if(players.get_id() == _boardModel[3][3].getOwnerId()){
+                players.setRoundPoints(1);
+                players.setRoundPlace(1);
+                players.setRoundCounter(round);
+            }
+        }
+        return false;
+    }
+    public static void checkEliminates(PlayerModel player){
+        player.set_isEliminated(true);
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                if(_boardModel[i][j].getOwnerId() == player.get_id()){
+                    player.set_isEliminated(false);
+                }
+            }
+        }
+    }
+
+    public static void clearEliminates(){
+        for(PlayerModel player : playerList){
+            player.set_isEliminated(false);
+        }
     }
 
     public static void generateRandomCubes()
@@ -77,6 +200,7 @@ public class BoardModel
     public static void printBoard() throws IOException {
 
         for (PlayerModel player : playerList) {
+            if(!player.is_isEliminated())
             for (int i = 0; i < 5 ; i++) {
                 for (int j = 0 ; j < 5 ; j++) {
                     player.get_outClient().writeUTF("PLANSZA " + i + " " + j + " " + _boardModel[i][j].getOwnerId() + " " + _boardModel[i][j].getCubesCount());
@@ -310,6 +434,7 @@ public class BoardModel
     public static void setSummaryDefender(int summaryDefender) {
         BoardModel.summaryDefender = summaryDefender;
     }
+
 
 
     public FieldModel[][] getBoardModel() {

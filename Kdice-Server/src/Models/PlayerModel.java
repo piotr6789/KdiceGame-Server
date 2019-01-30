@@ -20,6 +20,9 @@ public class PlayerModel extends Thread
     private Socket _clientSocket;
     private List<PlayerModel> _playerList;
     private boolean _isEliminated;
+    private int roundPoints;
+    private int roundPlace;
+    private int roundCounter = 0;
 
     public PlayerModel(int id, Socket clientSocket, DataInputStream inputStream, DataOutputStream outputStream) throws IOException
     {
@@ -29,6 +32,7 @@ public class PlayerModel extends Thread
         _outClient = outputStream;
         _isReady = false;
         _isEliminated = false;
+        roundPoints = 0;
     }
 
     @Override
@@ -123,5 +127,29 @@ public class PlayerModel extends Thread
 
     public void set_isEliminated(boolean _isEliminated) {
         this._isEliminated = _isEliminated;
+    }
+
+    public int getRoundPoints() {
+        return roundPoints;
+    }
+
+    public void setRoundPoints(int roundPoints) {
+        this.roundPoints = roundPoints;
+    }
+
+    public int getRoundPlace() {
+        return roundPlace;
+    }
+
+    public void setRoundPlace(int roundPlace) {
+        this.roundPlace = roundPlace;
+    }
+
+    public int getRoundCounter() {
+        return roundCounter;
+    }
+
+    public void setRoundCounter(int roundCounter) {
+        this.roundCounter = roundCounter;
     }
 }

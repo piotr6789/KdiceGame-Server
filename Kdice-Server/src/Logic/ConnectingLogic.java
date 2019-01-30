@@ -2,7 +2,6 @@ package Logic;
 
 import Models.BoardModel;
 import Models.PlayerModel;
-import org.omg.PortableServer.THREAD_POLICY_ID;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,67 +53,87 @@ public class ConnectingLogic
                         io.printStackTrace();
                     }
                 }
-                List<PlayerModel> randomList = new ArrayList<>();
-                randomList = playerList;
 
                 while (gameCounter < 10) {
                     gameCounter++;
                     roundCounter = 0;
                     board = new BoardModel(playerList);
+                    board.clearPoints(playerList);
                     board.createBoard();
                     board.setUpPlayersAndCubes();
 
-                    Collections.shuffle(randomList);
 
                     Thread.sleep(2000);
                     while (roundCounter < 100) {
 
-                        for (PlayerModel player : randomList) {
-                            player.get_outClient().writeUTF("START GRY");
+
+                        if(!board.checkPlayers(roundCounter)){
+                            break;
                         }
+                        board.clearEliminates();
+                        for(PlayerModel playerModel : playerList){
+                            board.checkEliminates(playerModel);
+                        }
+                        for (PlayerModel player : playerList) {
+                            if(player.is_isEliminated()){
+                                player.get_outClient().writeUTF("ELIMINACJA");
+                            }
+                        }
+                        for (PlayerModel player : playerList) {
+                            if(!player.is_isEliminated()){
+                                player.get_outClient().writeUTF("START GRY");
+                            }
+                        }
+
                         board.printBoard();
                         GameLogic.cleanBuffor(playerList);
 
 
                         for (PlayerModel player : playerList) {
-                            player.get_outClient().writeUTF("TWOJ RUCH");
-                            board.printBoard();
-                            answerClient = player.get_inClient().readUTF();
-                            while (answerClient.substring(0, 4).equals("ATAK")) {
-                                player.get_outClient().writeUTF("OK");
-                                for (PlayerModel players : playerList) {
-                                    if (players.get_id() != player.get_id()) {
-                                        players.get_outClient().writeUTF(answerClient);
-                                    }
-                                }
-                                board.updateBoardAfterAttack(answerClient, player.get_id());
+                            if(!player.is_isEliminated()){
+                                player.get_outClient().writeUTF("TWOJ RUCH");
                                 board.printBoard();
-                                GameLogic.cleanBuffor(playerList);
-                                for(PlayerModel playerModel : playerList){
-                                    playerModel.get_outClient().writeUTF(board.attackResult());
-                                }
                                 answerClient = player.get_inClient().readUTF();
-                            }
-                            if (answerClient.equals("PASS")) {
-                                player.get_outClient().writeUTF("PASS");
-                                continue;
+                                while (answerClient.substring(0, 4).equals("ATAK")) {
+                                    player.get_outClient().writeUTF("OK");
+                                    for (PlayerModel players : playerList) {
+                                        if (players.get_id() != player.get_id() && !players.is_isEliminated()) {
+                                            players.get_outClient().writeUTF(answerClient);
+                                        }
+                                    }
+                                    board.updateBoardAfterAttack(answerClient, player.get_id());
+                                    board.printBoard();
+                                    GameLogic.cleanBuffor(playerList);
+                                    for(PlayerModel playerModel : playerList){
+                                        if(!playerModel.is_isEliminated()){
+                                            playerModel.get_outClient().writeUTF(board.attackResult());
+                                        }
+                                    }
+                                    answerClient = player.get_inClient().readUTF();
+                                }
+                                if (answerClient.equals("PASS")) {
+                                    player.get_outClient().writeUTF("PASS");
+                                }
                             }
                         }
-
-                            for (PlayerModel player : playerList) {
-                                player.get_outClient().writeUTF("KONIEC RUNDY");
-                            }
+                        for (PlayerModel player : playerList) {
+                            board.roundResults(player, playerList, roundCounter);
+                        }
+                        board.roundPlaces(playerList);
+                        for (PlayerModel player : playerList) {
+                            player.get_outClient().writeUTF("KONIEC RUNDY");
+                        }
 
                         board.addCubesAfterRound();
 //                    Thread.sleep(1000);
                         roundCounter++;
                     }
+                    board.printRoundResults(playerList, roundCounter);
+                    board.addFinalPoints(playerList);
                 }
 
             }
-            for (PlayerModel player : playerList) {
-                player.get_outClient().writeUTF("KONIEC GRY");
-            }
+            board.printFinalResult(playerList);
         }catch(Exception io){
             io.printStackTrace();
         }
