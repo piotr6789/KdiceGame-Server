@@ -1,6 +1,6 @@
 package Logic;
 
-import Models.BoardModel;
+import Models.BoardHelper;
 import Models.PlayerModel;
 
 import java.io.DataInputStream;
@@ -8,17 +8,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 
-public class ConnectingLogic
+public class MainLogic
 {
-    public static List<PlayerModel> playerList = new ArrayList<>();
-    public static int counter = 0;
-    public static BoardModel board;
-    public static int roundCounter = 0;
-    public static int gameCounter = 0;
-    public static String answerClient = "";
-    public static int randomStarter;
+    private static List<PlayerModel> playerList = new ArrayList<>();
+    private static int counter = 0;
+    private static int gameCounter = 1;
 
     public static void startConnect(ServerSocket serverSocket) throws IOException, InterruptedException {
         int id = 1;
@@ -28,7 +25,7 @@ public class ConnectingLogic
                 counter++;
                 if (playerList.size() < 5) {
                     while (playerList.size() < 5) {
-                        Socket clientSocket = null;
+                        Socket clientSocket;
                         clientSocket = serverSocket.accept();
 
                         //Obtaining input and out streams
@@ -36,7 +33,7 @@ public class ConnectingLogic
                         DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
 
                         //Create a new thread object
-                        PlayerModel newPlayer = new PlayerModel(id, clientSocket, inputStream, outputStream);
+                        PlayerModel newPlayer = new PlayerModel(id, inputStream, outputStream);
                         playerList.add(newPlayer);
 
                         //Invoking the start() method
@@ -47,32 +44,32 @@ public class ConnectingLogic
 
                 if (playerList.size() == 5) {
                     try {
-                        GameLogic.Start(playerList);
+                        GameHelper.Start(playerList);
                         Thread.sleep(1000);
                     } catch (Exception io) {
                         io.printStackTrace();
                     }
                 }
 
-                while (gameCounter < 10) {
+                while (gameCounter < 11) {
                     gameCounter++;
-                    roundCounter = 0;
-                    board = new BoardModel(playerList);
-                    board.clearPoints(playerList);
-                    board.createBoard();
-                    board.setUpPlayersAndCubes();
+                    int roundCounter = 0;
+                    new BoardHelper(playerList);
+                    BoardHelper.clearPoints(playerList);
+                    BoardHelper.createBoard();
+                    BoardHelper.setUpPlayersAndCubes();
 
 
                     Thread.sleep(2000);
                     while (roundCounter < 100) {
 
 
-                        if(!board.checkPlayers(roundCounter)){
+                        if(!BoardHelper.checkPlayers()){
                             break;
                         }
-                        board.clearEliminates();
+                        BoardHelper.clearEliminates();
                         for(PlayerModel playerModel : playerList){
-                            board.checkEliminates(playerModel);
+                            BoardHelper.checkEliminates(playerModel);
                         }
                         for (PlayerModel player : playerList) {
                             if(player.is_isEliminated()){
@@ -85,57 +82,56 @@ public class ConnectingLogic
                             }
                         }
 
-                        board.printBoard();
-                        GameLogic.cleanBuffor(playerList);
+                        BoardHelper.printBoard();
+                        GameHelper.cleanBuffor(playerList);
 
 
                         for (PlayerModel player : playerList) {
                             if(!player.is_isEliminated()){
                                 player.get_outClient().writeUTF("TWOJ RUCH");
-                                board.printBoard();
-                                answerClient = player.get_inClient().readUTF();
-                                while (answerClient.substring(0, 4).equals("ATAK")) {
+                                BoardHelper.printBoard();
+                                String answerClient = player.get_inClient().readUTF();
+                                while (answerClient.substring(0, 4).startsWith("ATAK")) {
                                     player.get_outClient().writeUTF("OK");
                                     for (PlayerModel players : playerList) {
                                         if (players.get_id() != player.get_id() && !players.is_isEliminated()) {
                                             players.get_outClient().writeUTF(answerClient);
                                         }
                                     }
-                                    board.updateBoardAfterAttack(answerClient, player.get_id());
-                                    board.printBoard();
-                                    GameLogic.cleanBuffor(playerList);
+                                    BoardHelper.updateBoardAfterAttack(answerClient, player.get_id());
+                                    BoardHelper.printBoard();
+                                    GameHelper.cleanBuffor(playerList);
                                     for(PlayerModel playerModel : playerList){
                                         if(!playerModel.is_isEliminated()){
-                                            playerModel.get_outClient().writeUTF(board.attackResult());
+                                            playerModel.get_outClient().writeUTF(BoardHelper.attackResult());
                                         }
                                     }
                                     answerClient = player.get_inClient().readUTF();
                                 }
-                                if (answerClient.equals("PASS")) {
+                                if (answerClient.startsWith("PASS")) {
                                     player.get_outClient().writeUTF("PASS");
                                 }
                             }
                         }
                         for (PlayerModel player : playerList) {
-                            board.roundResults(player, playerList, roundCounter);
+                            BoardHelper.roundResults(player, playerList);
                         }
-                        board.roundPlaces(playerList);
+                        BoardHelper.roundPlaces(playerList);
                         for (PlayerModel player : playerList) {
                             player.get_outClient().writeUTF("KONIEC RUNDY");
                         }
 
-                        board.addCubesAfterRound();
-//                    Thread.sleep(1000);
+                        BoardHelper.addCubesAfterRound();
                         roundCounter++;
                     }
-                    board.printRoundResults(playerList, roundCounter);
-                    board.addFinalPoints(playerList);
+                    BoardHelper.printRoundResults(playerList, gameCounter);
+                    BoardHelper.addFinalPoints(playerList);
                 }
 
             }
-            board.printFinalResult(playerList);
-        }catch(Exception io){
-            io.printStackTrace();
+            BoardHelper.printFinalResult(playerList);
+        }catch(SocketException se){
+            System.out.println("Klient przestal dzialac.");
         }
     }
 }

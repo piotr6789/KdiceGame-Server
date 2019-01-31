@@ -2,10 +2,11 @@ package Models;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class BoardModel
+public class BoardHelper
 {
     private static FieldModel[][] _boardModel = new FieldModel[5][5];
     private static List<PlayerModel> playerList;
@@ -16,15 +17,11 @@ public class BoardModel
     private static int winner = 0;
     private static int summaryAttacker = 0;
     private static int summaryDefender = 0;
-    private static int checker = 0;
-    private static int roundCounter = 0;
 
 
-
-
-    public BoardModel(List<PlayerModel> playerList)
+    public BoardHelper(List<PlayerModel> playerList)
     {
-        this.playerList = playerList;
+        BoardHelper.playerList = playerList;
 
     }
 
@@ -37,12 +34,13 @@ public class BoardModel
     }
 
     public static void printFinalResult(List<PlayerModel> playerList) throws IOException {
-        String wynik = "WYNIK ";
+        StringBuilder wynik = new StringBuilder("WYNIK ");
+        playerList.sort(Comparator.comparing(PlayerModel::get_finalResult));
         for(PlayerModel player : playerList){
-            wynik = wynik + player.get_login() + " " + player.get_finalResult() + " ";
+            wynik.append(player.get_login()).append(" ").append(player.get_finalResult()).append(" ");
         }
         for(PlayerModel playerModel : playerList){
-            playerModel.get_outClient().writeUTF(wynik);
+            playerModel.get_outClient().writeUTF(wynik.toString());
         }
     }
 
@@ -52,23 +50,19 @@ public class BoardModel
         }
     }
 
-    public static void printRoundResults(List<PlayerModel> playerList, int round) throws IOException {
-        roundCounter = 0;
+    public static void printRoundResults(List<PlayerModel> playerList, int gameCount) throws IOException {
         for(PlayerModel player : playerList){
             if(player.getRoundPlace() == 0){
                 player.setRoundPoints(2);
                 player.setRoundPlace(2);
-                player.setRoundCounter(round);
             }
-            roundCounter = player.getRoundCounter();
-            player.get_outClient().writeUTF("TURA " + roundCounter + " " + player.getRoundPlace());
+            player.get_outClient().writeUTF("TURA " + (gameCount - 1) + " " + player.getRoundPlace());
         }
     }
 
-    public static void roundResults(PlayerModel playerModel, List<PlayerModel> playerList, int round){
-        checker = 0;
+    public static void roundResults(PlayerModel playerModel, List<PlayerModel> playerList){
+        int checker = 0;
         if(playerModel.getRoundPoints() == 0 && playerModel.is_isEliminated()){
-            playerModel.setRoundCounter(round);
             for(PlayerModel player : playerList){
                 if(player.get_id() != playerModel.get_id()){
                     if(player.getRoundPoints() != 0){
@@ -114,7 +108,7 @@ public class BoardModel
         }
     }
 
-    public static boolean checkPlayers(int round){
+    public static boolean checkPlayers(){
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
                 if(_boardModel[1][1].getOwnerId() != _boardModel[i][j].getOwnerId()){
@@ -126,7 +120,6 @@ public class BoardModel
             if(players.get_id() == _boardModel[3][3].getOwnerId()){
                 players.setRoundPoints(1);
                 players.setRoundPlace(1);
-                players.setRoundCounter(round);
             }
         }
         return false;
@@ -148,7 +141,7 @@ public class BoardModel
         }
     }
 
-    public static void generateRandomCubes()
+    private static void generateRandomCubes()
     {
         int x = new Random().nextInt(5);
         int y = new Random().nextInt(5);
@@ -367,81 +360,67 @@ public class BoardModel
     }
 
     public static String attackResult(){
-        String result = "WYNIK " + getAttackerID() + " " + getAttackerCubesValues().size() + " ";
+        StringBuilder result = new StringBuilder("WYNIK " + getAttackerID() + " " + getAttackerCubesValues().size() + " ");
         for(Integer valuesAttacker : attackerCubesValues){
-            result = result + valuesAttacker + " ";
+            result.append(valuesAttacker).append(" ");
         }
-        result = result + getDefenderID() + " " + getDefenderCubesValues().size() + " ";
+        result.append(getDefenderID()).append(" ").append(getDefenderCubesValues().size()).append(" ");
 
         for(Integer valuesDefender : defenderCubesValues){
-            result = result + valuesDefender + " ";
+            result.append(valuesDefender).append(" ");
         }
-        return result + getWinner();
+        return result.toString() + getWinner();
     }
 
-    public static List<Integer> getAttackerCubesValues() {
+    private static List<Integer> getAttackerCubesValues() {
         return attackerCubesValues;
     }
 
-    public static void setAttackerCubesValues(List<Integer> attackerCubesValues) {
-        BoardModel.attackerCubesValues = attackerCubesValues;
-    }
 
-    public static List<Integer> getDefenderCubesValues() {
+    private static List<Integer> getDefenderCubesValues() {
         return defenderCubesValues;
     }
 
-    public static void setDefenderCubesValues(List<Integer> defenderCubesValues) {
-        BoardModel.defenderCubesValues = defenderCubesValues;
-    }
 
-    public static int getAttackerID() {
+    private static int getAttackerID() {
         return attackerID;
     }
 
-    public static void setAttackerID(int attackerID) {
-        BoardModel.attackerID = attackerID;
+    private static void setAttackerID(int attackerID) {
+        BoardHelper.attackerID = attackerID;
     }
 
-    public static int getDefenderID() {
+    private static int getDefenderID() {
         return defenderID;
     }
 
-    public static void setDefenderID(int defenderID) {
-        BoardModel.defenderID = defenderID;
+    private static void setDefenderID(int defenderID) {
+        BoardHelper.defenderID = defenderID;
     }
 
-    public static int getWinner() {
+    private static int getWinner() {
         return winner;
     }
 
-    public static void setWinner(int winner) {
-        BoardModel.winner = winner;
+    private static void setWinner(int winner) {
+        BoardHelper.winner = winner;
     }
 
-    public static int getSummaryAttacker() {
+    private static int getSummaryAttacker() {
         return summaryAttacker;
     }
 
-    public static void setSummaryAttacker(int summaryAttacker) {
-        BoardModel.summaryAttacker = summaryAttacker;
+    private static void setSummaryAttacker(int summaryAttacker) {
+        BoardHelper.summaryAttacker = summaryAttacker;
     }
 
-    public static int getSummaryDefender() {
+    private static int getSummaryDefender() {
         return summaryDefender;
     }
 
-    public static void setSummaryDefender(int summaryDefender) {
-        BoardModel.summaryDefender = summaryDefender;
+    private static void setSummaryDefender(int summaryDefender) {
+        BoardHelper.summaryDefender = summaryDefender;
     }
 
 
-
-    public FieldModel[][] getBoardModel() {
-        return _boardModel;
-    }
-
-    public void setBoardModel(FieldModel[][] _fieldModel) {
-        this._boardModel = _fieldModel;
-    }
 }

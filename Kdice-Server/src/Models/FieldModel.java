@@ -1,30 +1,30 @@
 package Models;
 
-public class FieldModel
+class FieldModel
 {
     private int _cubesCount;
     private int _ownerId;
 
-    public FieldModel()
+    FieldModel()
     {
         _cubesCount = 0;
         _ownerId = 0;
     }
 
 
-    public int getCubesCount() {
+    int getCubesCount() {
         return _cubesCount;
     }
 
-    public void setCubesCount(int _cubesCount) {
+    void setCubesCount(int _cubesCount) {
         this._cubesCount = _cubesCount;
     }
 
-    public int getOwnerId() {
+    int getOwnerId() {
         return _ownerId;
     }
 
-    public void setOwnerId(int _ownerId) {
+    void setOwnerId(int _ownerId) {
         this._ownerId = _ownerId;
     }
 }
